@@ -1,0 +1,9 @@
+{
+    "ORIGINS": "*",
+
+    "DB_DATABASE": "MpIntergrationClient",
+    "DB_SERVER": "bd-api-integracion.cra31fd85gko.us-east-1.rds.amazonaws.com",
+    "DB_USERNAME": "usr_api_integration",
+    "DB_PASSWORD": "wkiKt6M#Y9xEY$b6",
+    "DB_PORT": 1345
+}
