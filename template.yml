@@ -3,7 +3,7 @@ Transform: 'AWS::Serverless-2016-10-31'
 
 Resources:
 
-  MyApi:
+  ApiIntegracion:
     Type: AWS::Serverless::Api
     Properties:
       StageName: dev
@@ -17,7 +17,9 @@ Resources:
         Authorizers:
           CognitoUserPoolAuth:
             UserPoolArn: !GetAtt CognitoUserPool.Arn
-
+            AuthorizationScopes:
+              - api-integ/hello
+              - api-integ/query
   HelloFunction:
     Type: 'AWS::Serverless::Function'
     Properties:
@@ -28,37 +30,48 @@ Resources:
         HelloAPI:
           Type: Api
           Properties:
-            RestApiId: !Ref MyApi
+            RestApiId: !Ref ApiIntegracion
             Path: /hello
             Method: GET
-
   QueryData:
     Type: 'AWS::Serverless::Function'
     Properties:
+      Timeout: 900
       Handler: handler.getdata
+      Layers:
+        - !Ref BasicDepLayer
       CodeUri: ./query
       Runtime: nodejs12.x
       Events:
         QueryData:
           Type: Api
           Properties:
-            RestApiId: !Ref MyApi
+            RestApiId: !Ref ApiIntegracion
             Path: /query
             Method: POST
       Environment:
           Variables:
-            DB_SERVER: ${file(./config/${self:provider.stage}.json):DB_SERVER}
-            DB_DATABASE: ${file(./config/${self:provider.stage}.json):DB_DATABASE}
-            DB_USERNAME: ${file(./config/${self:provider.stage}.json):DB_USERNAME}
-            DB_PASSWORD: ${file(./config/${self:provider.stage}.json):DB_PASSWORD}
-            DB_PORT: ${file(./config/${self:provider.stage}.json):DB_PORT}
+            DB_SERVER: 'bd-api-integracion.cra31fd85gko.us-east-1.rds.amazonaws.com'
+            DB_DATABASE: 'MpIntegrationClient'
+            DB_USERNAME: 'usr_api_integration'
+            DB_PASSWORD: 'wkiKt6M#Y9xEY$b6'
+            DB_PORT: 1345
       VpcConfig:
         SecurityGroupIds:
           - sg-0a3389e8272fd3297
         SubnetIds:
-          - subnet-0e3ed3eeca88f9cee
-          - subnet-023fd3ba85f1b2cac
-
+          - subnet-0070e84d768fa95f6
+          - subnet-0bf8cc7c3fb3cb046
+  BasicDepLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: api-integ-dep
+      Description: Dependencies for Api-Integ
+      ContentUri: dependencies/
+      CompatibleRuntimes:
+        - nodejs12.x
+      LicenseInfo: "MIT"
+      RetentionPolicy: Retain
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
@@ -74,13 +87,29 @@ Resources:
         - AttributeDataType: String
           Name: email
           Required: false
-  
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      AllowUnauthenticatedIdentities: false
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: mpgroupcolsvls-integ-client
+      UserPoolId: !Ref CognitoUserPool    
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      ClientName: api_gateway_auth_cognito_client
+      ClientName: AppColantaQuery
       UserPoolId: !Ref CognitoUserPool
-  
+      GenerateSecret: true
+      AllowedOAuthFlowsUserPoolClient: true
+      SupportedIdentityProviders:
+        - COGNITO
+      AllowedOAuthFlows:
+        - client_credentials
+      AllowedOAuthScopes:
+        - api-integ/query
+        - api-integ/hello
   PreSignupLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -93,7 +122,6 @@ Resources:
       MemorySize: 128
       Runtime: nodejs12.x
       Timeout: 3
-
   LambdaCognitoUserPoolExecutionPermission:
     Type: AWS::Lambda::Permission
     Properties: 
@@ -102,6 +130,17 @@ Resources:
       Principal: cognito-idp.amazonaws.com
       SourceArn: !Sub 'arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPool}'
 
+  UserPoolResourceServer: 
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties: 
+      UserPoolId: !Ref CognitoUserPool 
+      Identifier: "api-integ" 
+      Name: "api-integ" 
+      Scopes: 
+      - ScopeName: "hello" 
+        ScopeDescription: "Health Service for Verification" 
+      - ScopeName: "query"
+        ScopeDescription: "Service for query to customers"
 
 Outputs:
   Region:
@@ -110,11 +149,11 @@ Outputs:
 
   ApiId:
     Description: "API ID"
-    Value: !Ref MyApi
+    Value: !Ref ApiIntegracion
 
   ApiUrl:
     Description: "API endpoint URL for Prod environment"
-    Value: !Sub 'https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/dev/'
+    Value: !Sub 'https://${ApiIntegracion}.execute-api.${AWS::Region}.amazonaws.com/dev/'
   
   CognitoUserPoolId:
     Description: "MP Integracion Cognito User Pool Id"

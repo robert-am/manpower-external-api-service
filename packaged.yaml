@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Resources:
-  MyApi:
+  ApiIntegracion:
     Type: AWS::Serverless::Api
     Properties:
       StageName: dev
@@ -18,6 +18,9 @@ Resources:
               Fn::GetAtt:
               - CognitoUserPool
               - Arn
+            AuthorizationScopes:
+            - api-integ/hello
+            - api-integ/query
   HelloFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -29,21 +32,22 @@ Resources:
           Type: Api
           Properties:
             RestApiId:
-              Ref: MyApi
+              Ref: ApiIntegracion
             Path: /hello
             Method: GET
   QueryData:
     Type: AWS::Serverless::Function
     Properties:
       Handler: handler.getdata
-      CodeUri: s3://api-integracion-clientes/2e8e8bdd2f6cdb45a9c3e69d898647d8
+      CodeUri: s3://api-integracion-clientes/20efbcd3393f1893c13a4f49998542b8
       Runtime: nodejs12.x
+      Timeout: 30
       Events:
         QueryData:
           Type: Api
           Properties:
             RestApiId:
-              Ref: MyApi
+              Ref: ApiIntegracion
             Path: /query
             Method: POST
       Environment:
@@ -62,7 +66,7 @@ Resources:
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: __cognito_user_pool
+      UserPoolName: mp_integ_cognito_user_pool
       LambdaConfig:
         PreSignUp:
           Fn::GetAtt:
@@ -77,12 +81,31 @@ Resources:
       - AttributeDataType: String
         Name: email
         Required: false
+  IdentityPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      AllowUnauthenticatedIdentities: false
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: mpgroupcolsvls-integ-client
+      UserPoolId:
+        Ref: CognitoUserPool
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      ClientName: api_gateway_auth_cognito_client
+      ClientName: AppColantaQuery
       UserPoolId:
         Ref: CognitoUserPool
+      GenerateSecret: true
+      AllowedOAuthFlowsUserPoolClient: true
+      SupportedIdentityProviders:
+      - COGNITO
+      AllowedOAuthFlows:
+      - client_credentials
+      AllowedOAuthScopes:
+      - api-integ/query
+      - api-integ/hello
   PreSignupLambdaFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -103,6 +126,18 @@ Resources:
       Principal: cognito-idp.amazonaws.com
       SourceArn:
         Fn::Sub: arn:${AWS::Partition}:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPool}
+  UserPoolResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      UserPoolId:
+        Ref: CognitoUserPool
+      Identifier: api-integ
+      Name: api-integ
+      Scopes:
+      - ScopeName: hello
+        ScopeDescription: Health Service for Verification
+      - ScopeName: query
+        ScopeDescription: Service for query to customers
 Outputs:
   Region:
     Description: Region
@@ -111,16 +146,16 @@ Outputs:
   ApiId:
     Description: API ID
     Value:
-      Ref: MyApi
+      Ref: ApiIntegracion
   ApiUrl:
     Description: API endpoint URL for Prod environment
     Value:
-      Fn::Sub: https://${MyApi}.execute-api.${AWS::Region}.amazonaws.com/dev/
+      Fn::Sub: https://${ApiIntegracion}.execute-api.${AWS::Region}.amazonaws.com/dev/
   CognitoUserPoolId:
-    Description: Cognito User Pool Id
+    Description: MP Integracion Cognito User Pool Id
     Value:
       Ref: CognitoUserPool
   CognitoUserPoolClientId:
-    Description: Cognito User Pool Client Id
+    Description: MP Integracion Cognito User Pool Client Id
     Value:
       Ref: CognitoUserPoolClient

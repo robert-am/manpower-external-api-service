@@ -2,9 +2,9 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "mp-integ-serverless-clientes"
+stack_name = "mp-integ-serverless-clients"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-qgkdjzf1vimy"
-s3_prefix = "mp-integ-serverless-clientes"
+s3_prefix = "mp-integ-serverless-clients"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
@@ -13,9 +13,9 @@ profile = "manpower"
 [manpower]
 [manpower.deploy]
 [manpower.deploy.parameters]
-stack_name = "mp-integ-serverless-clientes"
+stack_name = "mp-integ-serverless-clients"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-qgkdjzf1vimy"
-s3_prefix = "mp-integ-serverless-clientes"
+s3_prefix = "mp-integ-serverless-clients"
 region = "us-east-1"
 profile = "manpower"
 confirm_changeset = true

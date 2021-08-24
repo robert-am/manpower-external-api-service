@@ -4,13 +4,13 @@
   "description": "",
   "main": "index.js",
   "config": {
-    "stackName": "mp-integ-serverless-clientes",
+    "stackName": "mp-integ-serverless-clients",
     "bucketName": "api-integracion-clientes"
   },
   "scripts": {
     "build": "sam build --region us-east-1 && sam package --profile manpower --template-file template.yml --s3-bucket api-integracion-clientes --output-template-file packaged.yaml",
-    "deploy": "sam deploy --region us-east-1 --template-file packaged.yaml --stack-name mp-integ-serverless-clientes --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM",
-    "describe": "aws cloudformation describe-stacks --region us-east-1 --stack-name mp-integ-serverless-clientes --query 'Stacks[].Outputs'"
+    "deploy": "sam deploy --region us-east-1 --template-file packaged.yaml --stack-name mp-integ-serverless-clients --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM",
+    "describe": "aws cloudformation describe-stacks --region us-east-1 --stack-name mp-integ-serverless-clients --query 'Stacks[].Outputs'"
   },
   "keywords": [],
   "author": "Robert Mejia",

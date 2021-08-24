@@ -15,7 +15,7 @@ class mssqlPoolClass {
             password: config.password || process.env.DB_PASSWORD,
             server: config.server || process.env.DB_SERVER,
             database: config.database || process.env.DB_DATABASE,
-            port: config.port || parseInt(process.env.DB_PORT) || 1433,
+            port: config.port || parseInt(process.env.DB_PORT) || 1345,
             requestTimeout: 3000000,
             options:{
                 encrypt:true

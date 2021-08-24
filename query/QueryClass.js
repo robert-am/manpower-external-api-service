@@ -1,7 +1,7 @@
 const mssqlPoolClass = require('./mssqlPoolClass')
 const query = require('./queriesMP')
 
-class queryClass extends mssqlPoolClass {
+class QueryClass extends mssqlPoolClass {
 
     constructor(config, name){
         super()
@@ -15,10 +15,15 @@ class queryClass extends mssqlPoolClass {
     }
 
     async executeSP(data){
-        let qParamsAccess = await this.getPool(this.name)
-        return await qParamsAccess.query(`exec ${data.spname} ${data.params}`);
+        let connection = await this.getPool(this.name)
+        if(typeof data.params === 'undefined'){
+            return await connection.query(`exec ${data.spname}`)
+        } else {
+            return await connection.query(`exec ${data.spname} ${data.params}`)
+        }
     }
-
 }
 
-module.exports = queryClass
+module.exports = {
+    QueryClass
+} 
